@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>写文章 - 后台管理</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .editor-card {
+            background: white;
+            width: 800px;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea { height: 300px; resize: vertical; }
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+    <div class="editor-card">
+        <h1>✍️ 写新文章</h1>
+        <input type="text" id="title" placeholder="请输入文章标题..." required>
+        <textarea id="content" placeholder="开始你的创作..."></textarea>
+        <button onclick="publish()">发布文章</button>
+        <a href="nav.html" style="margin-left: 20px; color: #666;">返回首页</a>
+    </div>
+
+    <script>
+        function publish() {
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            if(!title || !content) { alert("标题和内容不能为空！"); return; }
+
+            // 发送给后端
+            fetch('http://localhost:3000/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert("发布成功！");
+                    window.location.href = 'nav.html'; // 成功后跳回首页
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的全栈博客 - 星空版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- 1. 全局与背景设置 --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: 'Noto Sans SC', sans-serif;
+    /* 【修改】变成透明，让底下的星空露出来 */
+    background: transparent; 
+}
+
+        /* --- 核心特效：星空 Canvas --- */
+        #starfield {
+            position: fixed; /* 固定定位，铺满全屏 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* 放在最底层作为背景 */
+            /* 给 Canvas 一个深邃的渐变背景色 */
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+
+        /* --- 2. 前景内容样式适配 (深色毛玻璃风) --- */
+        
+        /* 导航栏 */
+        .navbar {
+            position: sticky; 
+    top: 0; 
+    z-index: 100; /* 确保在最上层 */
+            height: 70px; padding: 0 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            
+            /* 毛玻璃效果 */
+            background: rgba(255, 255, 255, 0.05); /* 极淡的白色半透明 */
+            backdrop-filter: blur(10px); /* 模糊滤镜 */
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .logo { font-size: 24px; font-weight: 700; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .nav-actions a {
+            text-decoration: none; color: rgba(255,255,255,0.8); margin-left: 25px; font-weight: 500; transition: color 0.3s;
+        }
+        .nav-actions a:hover { color: #fff; }
+        .btn-write {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 渐变按钮 */
+            color: white !important; padding: 8px 25px;
+            border-radius: 25px; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-write:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .btn-write i { margin-right: 8px; }
+
+        /* 博客列表区域 */
+        .container {
+            max-width: 900px; margin: 40px auto; padding: 0 20px;
+            position: relative; /* 【新增】确保有层级 */
+    z-index: 10;        /* 【新增】浮在星星上面 *
+        }
+        
+        /* 文章卡片 (深色毛玻璃) */
+        .article-card {
+            /* 毛玻璃效果 */
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            
+            padding: 35px;
+            margin-bottom: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); /* 更深的阴影 */
+            transition: all 0.3s ease;
+            color: #fff;
+        }
+        .article-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .article-title { font-size: 26px; color: #fff; margin-bottom: 12px; font-weight: 700; letter-spacing: 1px; }
+        .article-date { color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; }
+        .article-date i { margin-right: 8px; }
+        .article-excerpt { color: rgba(255,255,255,0.8); line-height: 1.8; font-size: 16px; }
+        
+        /* 加载提示文字颜色 */
+        #loading-text { color: rgba(255,255,255,0.6); }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+
+    <nav class="navbar">
+        <div class="logo"><i class="fas fa-rocket" style="margin-right: 10px;"></i>MyBlog</div>
+        <div class="nav-actions">
+            <a href="#"><i class="fas fa-home"></i> 首页</a>
+            <a href="register.html"><i class="fas fa-user"></i> 注册/登录</a>
+            <a href="write.html" class="btn-write"><i class="fas fa-pen-nib"></i> 写文章</a>
+        </div>
+    </nav>
+
+    <div class="container" id="articleList">
+        <p id="loading-text" style="text-align:center; margin-top: 50px;">
+            <i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i>正在穿越星际加载文章...
+        </p>
+    </div>
+
+    <script>
+        // --- 1. 星空粒子特效 JS 代码 ---
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let stars = [];
+        const numStars = 800; // 星星数量，越多越密集
+        const speed = 0.5; // 飞行速度
+        let centerX, centerY;
+
+        // 初始化 Canvas 尺寸
+        function initCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        // 星星类
+        class Star {
+            constructor() {
+                this.reset(true);
+            }
+
+            reset(initial = false) {
+                // x, y 是在屏幕上的随机位置
+                this.x = (Math.random() - 0.5) * width * 2;
+                this.y = (Math.random() - 0.5) * height * 2;
+                // z 是深度，初始随机，之后从最远处重新开始
+                this.z = initial ? Math.random() * width : width;
+                // 随机大小
+                this.size = Math.random() * 2;
+            }
+
+            update() {
+                // 核心逻辑：减小 z 值，模拟向屏幕飞来
+                this.z -= speed;
+                // 如果飞到屏幕后面了，重置到远处
+                if (this.z <= 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                // 3D 到 2D 的透视投影公式
+                const screenX = (this.x / this.z) * centerX + centerX;
+                const screenY = (this.y / this.z) * centerY + centerY;
+                // 离得越近，星星越大，越亮
+                const currentSize = (1 - this.z / width) * this.size * 3;
+                const opacity = (1 - this.z / width);
+
+                // 如果星星在屏幕外，不绘制
+                if(screenX < 0 || screenX > width || screenY < 0 || screenY > height) return;
+
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, currentSize > 0 ? currentSize : 0, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`; // 白色，透明度随距离变化
+                ctx.fill();
+            }
+        }
+
+        // 初始化所有星星
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < numStars; i++) {
+                stars.push(new Star());
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            // 清空画布 (使用半透明黑色清空，可以形成淡淡的拖尾效果，这里用纯透明清空)
+            ctx.clearRect(0, 0, width, height);
+
+            for (const star of stars) {
+                star.update();
+                star.draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            initCanvas();
+            initStars(); // 重新生成星星以适应新尺寸
+        });
+
+        // 启动！
+        initCanvas();
+        initStars();
+        animate();
+
+
+        // --- 2. 博客文章加载逻辑 (保持不变) ---
+        window.onload = function() {
+            fetch('http://localhost:3000/articles')
+                .then(response => response.json())
+                .then(articles => {
+                    const listContainer = document.getElementById('articleList');
+                    listContainer.innerHTML = '';
+
+                    articles.forEach(article => {
+                        const card = `
+                            <div class="article-card">
+                                <div class="article-title">${article.title}</div>
+                                <div class="article-date">
+                                    <i class="far fa-calendar-alt"></i> ${article.date}
+                                </div>
+                                <div class="article-excerpt">${article.content}</div>
+                            </div>
+                        `;
+                        listContainer.innerHTML += card;
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('articleList').innerHTML = '<p align="center" style="color:rgba(255,255,255,0.6); margin-top:50px;"><i class="fas fa-exclamation-triangle"></i> 星际通讯中断 (连接失败)，请检查 node server.js 是否运行</p>';
+                });
+        }
+    </script>
+
+</body>
+</html>

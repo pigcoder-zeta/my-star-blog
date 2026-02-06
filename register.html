@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加入我们 - 极简注册</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- 1. 全局环境设定 --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+ body {
+    font-family: 'Noto Sans SC', sans-serif;
+    
+    /* --- 修复的核心在这里 --- */
+    
+    /* 1. 设置一个深色底色作为保险（防止图片挂了变白屏） */
+    background-color: #333; 
+    
+    /* 2. 我们可以暂时用一个“渐变色”代替图片，既好看又不需要联网加载 */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    
+    /* 如果你一定要用图片，请确保网络能访问这个链接，或者换一个链接 */
+    /* background: url('https://images.unsplash.com/photo-1542393545-10f5cde2c81d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed; */
+    
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+        /* --- 2. 毛玻璃卡片 --- */
+        .glass-container {
+            width: 380px;
+            padding: 50px 40px;
+            background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* --- 3. 输入框组 (包含图标) --- */
+        .input-group {
+            position: relative; /* 【关键】作为绝对定位图标的参考系 */
+            margin-bottom: 30px;
+        }
+
+        /* 【新增步骤 2】图标样式 */
+        .input-group i {
+            position: absolute; /* 绝对定位：脱离文档流，自由移动 */
+            left: 0;            /* 靠左对齐 */
+            top: 12px;          /* 距离顶部距离（根据输入框高度微调） */
+            color: rgba(255, 255, 255, 0.8); /* 图标颜色 */
+            font-size: 18px;
+            transition: 0.3s;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 0;
+            
+            /* 【新增步骤 3】左内边距 */
+            /* 因为左边放了图标，文字如果从最左边开始会压住图标 */
+            /* 所以要给 input 设置 padding-left，把文字往右推 */
+            padding-left: 35px; 
+            
+            font-size: 16px;
+            color: #fff;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
+        /* 交互微调：当输入框聚焦时，图标和底边都变亮 */
+        .input-group input:focus { border-bottom: 2px solid #fff; }
+        .input-group input:focus ~ i { color: #fff; transform: scale(1.1); } 
+        /* (~ i 表示选择 input 后面的那个兄弟 i 元素) */
+
+        /* --- 4. 按钮美化 --- */
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #007bff;
+            background: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+        button:active { transform: scale(0.95); }
+
+        /* --- 5. 辅助信息 --- */
+        .footer-text { text-align: center; margin-top: 20px; font-size: 13px; }
+        .footer-text a { color: rgba(255, 255, 255, 0.8); text-decoration: none; font-weight: bold; }
+        .footer-text a:hover { text-decoration: underline; color: #fff; }
+        .message { text-align: center; margin-top: 15px; font-size: 14px; min-height: 20px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .error { color: #ffcccc; }
+        .success { color: #ccffcc; }
+    </style>
+</head>
+<body>
+
+    <div class="glass-container">
+        <h2>创建账户</h2>
+        
+        <form id="registerForm">
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="username" placeholder="用户名" required autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="密码" required>
+            </div>
+            
+            <button type="submit">立即注册</button>
+        </form>
+
+        <p id="msg" class="message"></p>
+
+        <div class="footer-text">
+            <p>已有账号？ <a href="nav.html">返回首页</a></p>
+        </div>
+    </div>
+
+<script>
+        const form = document.getElementById('registerForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // 阻止表单默认刷新
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // 简单的长度验证
+            if(username.length < 3) {
+                msg.textContent = "用户名太短啦！";
+                msg.className = "message error";
+                return;
+            }
+
+            // 提示用户正在请求
+            msg.textContent = "正在连接服务器...";
+            msg.className = "message";
+
+            // --- 发送网络请求 (Fetch) ---
+            fetch('http://localhost:3000/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, password: password })
+            })
+            .then(response => response.json()) // 把后端返回的数据转成 JSON
+            .then(data => {
+                if (data.success) {
+                    // 注册成功
+                    msg.textContent = "🎉 " + data.message;
+                    msg.className = "message success";
+                    // 1.5秒后跳转
+                    setTimeout(() => { window.location.href = 'nav.html'; }, 1500);
+                } else {
+                    // 注册失败（比如用户名重复）
+                    msg.textContent = "❌ " + data.message;
+                    msg.className = "message error";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                msg.textContent = "连接失败！请确认后端服务器(node server.js)已启动";
+                msg.className = "message error";
+            });
+        });
+    </script>
+</body>
+</html>
